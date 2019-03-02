@@ -1,0 +1,61 @@
+---
+title: "zcta_to_county"
+author: "Cameron Malloy"
+date: "3/2/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(dplyr)
+library(DataComputing)
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "/Volumes/GoogleDrive/My\ Drive/ecodatalab/census")
+```
+
+Grab the relationship data
+
+```{r, cache=TRUE}
+relation <- read.table(file='data/RELATIONSHIPS/zcta_county_rel_10.txt', header=TRUE, sep=',')
+kable(head(relation))
+```
+
+I checked to see if the populations are similar in the county_to_zcta.rmd file, so let's just grab the data we want
+
+```{r, cache=TRUE}
+relation <- relation[,c('ZCTA5', 'GEOID', 'COPOPPCT')]
+
+zcta_data <- read.csv('data/ZCTA/2011_5YR_ZCTA.csv')
+zcta_data <- zcta_data[,c('Geo_ZCTA5', 'SE_T002_002')]
+names(zcta_data) <- c('ZCTA5', 'ZCTA_DENSITY')
+```
+
+Now that we have the deata we need, we can merge the two datasets together to help get our weighted average
+
+```{r}
+preds <- merge(relation, zcta_data, by='ZCTA5')
+kable(head(preds))
+```
+
+```{r}
+preds$weights <- preds[,'COPOPPCT'] * preds[,'ZCTA_DENSITY'] / 100
+preds <- aggregate(preds[,'weights'], by=list(preds[,'GEOID']), FUN=sum)
+names(preds) <- c('GEOID', 'DENSITY')
+```
+
+```{r}
+county_data <- read.csv('data/COUNTY/2009-2017\ data\ folders/2010\ 5-year/R11887103_SL050.csv')
+county_data <- county_data[,c('Geo_FIPS', 'SE_T002_002')]
+names(county_data) <- c('GEOID', 'CODENSITY')
+```
+
+```{r}
+comparison <- merge(preds, county_data, by='GEOID')
+comparison$diff <- abs(comparison[,2] - comparison[,3])
+kable(head(comparison[order(comparison$diff, decreasing=TRUE),], 20))
+```
+
+```{r}
+(MAE <- mean(comparison[,'diff']))
+```

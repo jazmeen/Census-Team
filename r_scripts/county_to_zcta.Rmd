@@ -1,0 +1,81 @@
+---
+title: "county_to_zcta"
+author: "Cameron Malloy"
+date: "3/2/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(dplyr)
+library(DataComputing)
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "/Volumes/GoogleDrive/My\ Drive/ecodatalab/census")
+```
+
+Grab the relationship data
+
+```{r, cache=TRUE}
+relation <- read.table(file='data/RELATIONSHIPS/zcta_county_rel_10.txt', header=TRUE, sep=',')
+kable(head(relation))
+```
+
+```{r, cache=TRUE}
+relation <- relation[,c('ZCTA5', 'GEOID', 'ZPOPPCT', 'COPOP')]
+```
+
+Check to see if the populations in counties are relatively similar
+
+```{r, cache=TRUE}
+county_data <- read.csv('data/COUNTY/2009-2017\ data\ folders/2010\ 5-year/R11887103_SL050.csv')
+county_data <- county_data[,c('Geo_FIPS', 'SE_T002_001', 'SE_T002_002')]
+names(county_data) <- c('GEOID', 'COPOP', 'CODENSITY')
+```
+
+```{r}
+relation_grp <- aggregate(x=relation[,c('COPOP', 'ZCTA5')], by=list(relation[,'GEOID']), FUN='first')
+names(relation_grp) <- c('GEOID', 'COPOP', 'ZCTA5')
+kable(head(merge(relation_grp, county_data, by='GEOID')))
+```
+
+Since they are relatively similar, we can proceed.
+So, in order to go from COUNTY to ZCTA, we need to find the percentage of the ZCTA within some county, then multiply that by the variable at hand, then sum all of those up to get the weighted average.
+
+```{r}
+preds <- merge(relation, county_data[,c('GEOID', 'CODENSITY')], by='GEOID')
+preds$weights <- preds[,'ZPOPPCT'] * preds[,'CODENSITY'] / 100
+preds <- aggregate(x=preds[,'weights'], by=list(preds[,'ZCTA5']), FUN=sum)
+names(preds) <- c('ZCTA5', 'PRED_DENSITY')
+kable(head(preds))
+```
+
+Now that we have our predictions, let's compare them to the actual values (in 2011 bare in mind). Let's first import the dataset to compare to.
+
+```{r, cache=TRUE}
+zcta_data <- read.csv('data/ZCTA/2011_5YR_ZCTA.csv')
+zcta_data <- zcta_data[,c('Geo_ZCTA5', 'SE_T002_002')]
+names(zcta_data) <- c('ZCTA5', 'ZCTA_DENSITY')
+kable(head(zcta_data))
+```
+
+### Computing Mean Absolute Error (MAE)
+First we merge the two datasets based on the ZCTA, then we compute the MAE
+
+```{r}
+comparison <- merge(preds, zcta_data, by='ZCTA5', all=TRUE)
+comparison$diff <- abs(comparison[,2] - comparison[,3])
+kable(head(comparison[order(comparison$diff, decreasing=TRUE),], 20))
+```
+
+```{r}
+(MAE <- mean(comparison[,'diff']))
+```
+
+This high error is probably due to the fact that many zip codes have a high population compared to the lower populations dragging the county populations down and thus our predictions down as well.
+
+
+
+
+
+
