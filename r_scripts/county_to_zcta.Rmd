@@ -74,6 +74,17 @@ kable(head(comparison[order(comparison$diff, decreasing=TRUE),], 20))
 
 This high error is probably due to the fact that many zip codes have a high population compared to the lower populations dragging the county populations down and thus our predictions down as well.
 
+```{r, echo=FALSE}
+ggplot(data=comparison, aes(diff)) +
+  geom_histogram(aes(y=..density..), binwidth=100, col='blue4', fill='blue4') +
+  xlim(-1, 10000)
+```
+
+```{r, echo=FALSE}
+ggplot(data=comparison, aes(diff)) +
+  geom_histogram(aes(y=..density..), binwidth=10, col='gold', fill='blue4') +
+  xlim(-1, 400)
+```
 
 
 

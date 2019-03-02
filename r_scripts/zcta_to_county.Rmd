@@ -53,9 +53,30 @@ names(county_data) <- c('GEOID', 'CODENSITY')
 ```{r}
 comparison <- merge(preds, county_data, by='GEOID')
 comparison$diff <- abs(comparison[,2] - comparison[,3])
+comparison <- na.omit(comparison)
+comparison <- comparison %>% filter(diff < 10^10)
+length(comparison$diff)
 kable(head(comparison[order(comparison$diff, decreasing=TRUE),], 20))
 ```
 
 ```{r}
 (MAE <- mean(comparison[,'diff']))
+```
+
+Error histograms:
+
+```{r, echo=FALSE}
+ggplot(data=comparison, aes(diff)) +
+  geom_histogram(aes(y=..density..), binwidth=100, col='blue4', fill='blue4') +
+  xlim(-1, 10000)
+```
+
+```{r, echo=FALSE}
+ggplot(data=comparison, aes(diff)) +
+  geom_histogram(aes(y=..density..), binwidth=10, col='gold', fill='blue4') +
+  xlim(-1, 400)
+```
+
+```{r}
+#quantile(list(comparison[,'diff']), .95)
 ```
