@@ -63,20 +63,33 @@ kable(head(comparison[order(comparison$diff, decreasing=TRUE),], 20))
 (MAE <- mean(comparison[,'diff']))
 ```
 
-Error histograms:
-
-```{r, echo=FALSE}
-ggplot(data=comparison, aes(diff)) +
-  geom_histogram(aes(y=..density..), binwidth=100, col='blue4', fill='blue4') +
-  xlim(-1, 10000)
-```
-
-```{r, echo=FALSE}
-ggplot(data=comparison, aes(diff)) +
-  geom_histogram(aes(y=..density..), binwidth=10, col='gold', fill='blue4') +
-  xlim(-1, 400)
-```
+Find where most of the data is (95%)
 
 ```{r}
-#quantile(list(comparison[,'diff']), .95)
+quantiles <- quantile(as.vector(comparison[,'diff']), probs=c(.7, .8, .9))
+```
+
+This high error is probably due to the fact that many zip codes have a high population compared to the lower populations dragging the county populations down and thus our predictions down as well.
+
+```{r, echo=FALSE, warning=FALSE}
+ggplot(data=comparison, aes(diff)) +
+  geom_histogram(aes(y=..density..), binwidth=100, col='blue4', fill='blue4') +
+  geom_vline(aes(xintercept=quantiles[1], color='70%')) +
+  geom_vline(aes(xintercept=quantiles[2], color='80%')) +
+  geom_vline(aes(xintercept=quantiles[3], color='90%')) +
+  xlim(-1, 10000) +
+  ylim(0, .002) +
+  ggtitle('Histogram of Mean Absolute Errors') +
+  xlab('MAE')
+```
+
+```{r, echo=FALSE, warning=FALSE}
+ggplot(data=comparison, aes(diff)) +
+  geom_histogram(aes(y=..density..), binwidth=10, col='gold', fill='blue4') +
+  geom_vline(aes(xintercept=quantiles[1], color='70%')) +
+  geom_vline(aes(xintercept=quantiles[2], color='80%')) +
+  geom_vline(aes(xintercept=quantiles[3], color='90%')) +
+  xlim(-1, 400) +
+  ggtitle('Histogram of Mean Absolute Errors (Zoomed In)') +
+  xlab('MAE')
 ```
