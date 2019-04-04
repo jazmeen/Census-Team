@@ -2,7 +2,11 @@
 title: "zcta_to_county"
 author: "Cameron Malloy"
 date: "3/2/2019"
-output: html_document
+output:
+  html_document:
+    theme: cosmo
+    highlight: pygments
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
