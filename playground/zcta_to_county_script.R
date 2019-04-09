@@ -1,11 +1,26 @@
+##### START OF THINGS YOU HAVE TO CHANGE #####
+
+# TODO: if not part of census, change this to the root folder of your data files
 setwd("/Volumes/GoogleDrive/My\ Drive/ecodatalab/census")
 
+# TODO: change the file path here to the relationship file path. If you didn't change wd, then you don't need to change this
 data_to_convert_path <- 'data/ZCTA/2011_5YR_ZCTA-Old.csv'
+
+# TODO: set this as the path where you want the csv of the new data to go
 output_path <- '~/Desktop/School\ Stuff/Census-Team/playground'
+
+# TODO: Set this to the name of the column that corresponds to the geotag of the ZCTA. View the relationship files for what they look like
+#       under the column 'ZCTA5' in the relationship file
 zcta_geo_id <- 'Geo_ZCTA5' # The geotag of the ZCTA (i.e. Geo_ZCTA5), should be the same as ZCTA5 (3 digits)
-col_to_convert <- 'SE_T002_002' # The name of the column you want to convert to county level data
-# Readable name of column you're converting (i.e. Instead of SE_T002_002, name it pop_density), optionally just put the same as col_to_convert
+
+# TODO: Set this to the name of the column of ZCTA level data you want to convert to county level data
+col_to_convert <- 'SE_T002_002'
+
+# TODO: (optional): set this to a readable name of column you're converting (i.e. Instead of SE_T002_002, name it pop_density),
+#                   otherwise, just put the same as col_to_convert
 col_name <- 'ZCTA_DENSITY'
+
+#### END OF THINGS YOU HAVE TO CHANGE #####
 
 
 zcta_data_vec <- c(zcta_geo_id, col_to_convert)
@@ -29,4 +44,4 @@ preds$weights <- preds[,'COPOPPCT'] * preds[,col_name] / 100
 preds <- aggregate(preds[,'weights'], by=list(preds[,'GEOID']), FUN=sum)
 names(preds) <- c('GEOID', paste(col_name, "county_level", sep="_"))
 
-write.csv(preds, file = paste(output_path, "test.csv", sep="/"))
+write.csv(preds, file = paste(output_path, "predicted.csv", sep="/"))
